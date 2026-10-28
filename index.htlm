@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coin Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:Manrope,Helvetica,sans-serif;color:#111;background:#f7f5f8;-webkit-tap-highlight-color:transparent}
+button{all:unset;cursor:pointer;text-align:center;box-sizing:border-box}
+.app{position:relative;min-height:100dvh;max-width:480px;margin:0 auto;overflow:hidden;display:flex;flex-direction:column}
+.bg{position:fixed;inset:0;filter:blur(60px);pointer-events:none}
+.bg i{position:absolute;border-radius:50%}
+.bg i:nth-child(1){width:320px;height:320px;background:#ffb3c4;top:-60px;left:-90px;animation:drift 12s ease-in-out infinite}
+.bg i:nth-child(2){width:300px;height:300px;background:#a6eef4;top:40%;right:-120px;animation:drift 14s ease-in-out infinite reverse}
+.bg i:nth-child(3){width:260px;height:260px;background:#ffe3a1;bottom:-40px;left:-40px;animation:drift 16s ease-in-out infinite}
+.veil{position:fixed;inset:0;background:rgba(255,255,255,.35);pointer-events:none}
+.screen{position:relative;flex:1;display:flex;flex-direction:column;padding:28px 24px 32px}
+.hidden{display:none!important}
+.bars{display:flex;gap:6px}.bars span{flex:1;height:4px;border-radius:2px;background:rgba(0,0,0,.1);transition:background .2s}
+.label{margin-top:22px;text-align:center;font-size:12px;font-weight:800;letter-spacing:.1em;color:#fe2c55;text-transform:uppercase}
+h2{margin:10px 0 0;text-align:center;font-size:24px;line-height:1.25;font-weight:800;text-wrap:balance}
+.coinWrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:200px}
+.coin{position:relative;width:170px;height:170px;animation:bob 3s ease-in-out infinite}
+.coin .face{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc83a 50%,#e89a00);box-shadow:inset 0 0 0 10px #ffd96a,inset 0 0 0 13px #e8a300,inset -8px -10px 20px rgba(160,90,0,.35),0 24px 40px rgba(232,154,0,.35);display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:800;color:#b87400;text-shadow:0 2px 0 #ffe9a0}
+.coin .star{position:absolute;top:-6px;right:-4px;font-size:52px;color:#ffb000;text-shadow:0 4px 10px rgba(232,154,0,.4)}
+.opts{display:flex;flex-direction:column;gap:12px}
+.opt{padding:18px 16px;border-radius:16px;background:rgba(255,255,255,.65);border:2px solid rgba(255,255,255,.9);font-weight:800;font-size:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:all .2s}
+.opt.on{background:rgba(254,44,85,.1);border-color:#fe2c55;color:#fe2c55}
+.cta{position:relative;margin-top:22px;width:100%;padding:19px 0;border-radius:16px;background:#fe2c55;color:#fff;font-weight:800;font-size:17px;letter-spacing:.06em;transition:background .2s,transform .1s}
+.cta:active{transform:scale(.97)}.cta.off{background:#f7a8b8;cursor:default}
+.cta .arr{position:absolute;right:22px;font-size:20px}
+.win{align-items:center;justify-content:center;text-align:center;gap:14px}
+.win .coin{cursor:pointer;z-index:2}
+.win h1{margin:0;font-size:38px;font-weight:800;line-height:1.05}
+.win p{margin:0;color:#555;font-size:16px}
+.pop{animation:pop .4s ease-out}
+#confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+#confetti span{position:absolute;top:0}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-12px) rotate(4deg)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-40px)}}
+@keyframes fall{0%{transform:translate(0,-40px) rotate(0);opacity:1}100%{transform:translate(var(--dx),110vh) rotate(var(--r));opacity:.9}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bg"><i></i><i></i><i></i></div><div class="veil"></div>
+
+  <section class="screen" id="quiz">
+    <div class="bars"><span></span><span></span><span></span></div>
+    <div class="label" id="qLabel">Question 1 of 3</div>
+    <h2 id="qText"></h2>
+    
+    <!-- Updated Coin Image for Quiz Screen -->
+    <div class="coinWrap">
+      <div class="coin">
+        <img src="https://i.ibb.co/9mNm5Lpx/photo-2026-10-27-15-43-37.jpg" alt="coin" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 24px 40px rgba(0,0,0,0.15);">
+      </div>
+    </div>
+    
+    <div class="opts" id="opts"></div>
+    <button class="cta off" id="next">NEXT<span class="arr">→</span></button>
+  </section>
+
+  <section class="screen win hidden" id="win">
+    
+    <!-- Updated Coin Image for Win Screen -->
+    <div class="coin" id="restartCoin" title="Restart">
+      <img src="https://i.ibb.co/9mNm5Lpx/photo-2026-10-27-15-43-37.jpg" alt="coin" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 24px 40px rgba(0,0,0,0.15);">
+    </div>
+    
+    <div class="label" id="score" style="margin-top:16px"></div>
+    <div id="pre"><h1 id="plus"></h1><button class="cta" id="claim" style="margin-top:24px;z-index:2">CLAIM</button></div>
+    <div id="post" class="hidden"><h1 class="pop">Congratulations!</h1><p style="margin-top:12px">You earned <b id="earned" style="color:#111"></b></p></div>
+  </section>
+
+  <div id="confetti"></div>
+</div>
+
+<script>
+const COINS_PER_ANSWER = 500;
+const LOOP_CONFETTI = true;
+const QUESTIONS = [
+  { t: 'When was TikTok released?', o: ['2016', '2025', '2026'], a: 0 },
+  { t: 'What happens if you quickly double-tap the screen while watching a video?', o: ['Like', 'Repost', 'Report'], a: 0 },
+  { t: 'Which way do you swipe to go to the next video?', o: ['Left', 'Up', 'Down'], a: 1 }
+];
+
+const $ = id => document.getElementById(id);
+let q = 0, sel = null, correct = 0;
+
+function renderQuestion() {
+  const item = QUESTIONS[q];
+  $('qLabel').textContent = `Question ${q + 1} of 3`;
+  $('qText').textContent = item.t;
+  document.querySelectorAll('.bars span').forEach((b, i) => b.style.background = i < q ? '#fe2c55' : i === q ? '#111' : 'rgba(0,0,0,.1)');
+  $('opts').innerHTML = '';
+  item.o.forEach((text, i) => {
+    const b = document.createElement('button');
+    b.className = 'opt'; b.textContent = text;
+    b.onclick = () => { sel = i; document.querySelectorAll('.opt').forEach((x, j) => x.classList.toggle('on', j === i)); $('next').classList.remove('off'); };
+    $('opts').appendChild(b);
+  });
+  sel = null; $('next').classList.add('off');
+}
+
+$('next').onclick = () => {
+  if (sel === null) return;
+  if (sel === QUESTIONS[q].a) correct++;
+  if (q < QUESTIONS.length - 1) { q++; renderQuestion(); }
+  else showWin();
+};
+
+function showWin() {
+  $('quiz').classList.add('hidden'); $('win').classList.remove('hidden');
+  $('score').textContent = `Correct: ${correct} of 3`;
+  $('plus').textContent = `+${correct * COINS_PER_ANSWER} coins`;
+  $('earned').textContent = `${correct * COINS_PER_ANSWER} coins`;
+  $('pre').classList.remove('hidden'); $('post').classList.add('hidden');
+}
+
+$('claim').onclick = () => {
+  $('pre').classList.add('hidden'); $('post').classList.remove('hidden');
+  confetti();
+};
+
+$('restartCoin').onclick = () => location.reload();
+
+function confetti() {
+  const box = $('confetti'), cols = ['#fe2c55', '#25d8e6', '#ffc83a', '#111', '#8b5cf6'];
+  box.innerHTML = '';
+  for (let i = 0; i < 90; i++) {
+    const s = document.createElement('span'), w = 6 + Math.random() * 6, round = Math.random() < .3;
+    Object.assign(s.style, {
+      left: Math.random() * 100 + '%', width: w + 'px', height: (round ? w : w * 1.8) + 'px',
+      borderRadius: round ? '50%' : '2px', background: cols[i % cols.length],
+      animation: `fall ${2.2 + Math.random() * 2}s cubic-bezier(.2,.6,.4,1) ${Math.random() * 1.2}s ${LOOP_CONFETTI ? 'infinite' : '1'} both`
+    });
+    s.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
+    s.style.setProperty('--r', (Math.random() * 900 - 450) + 'deg');
+    box.appendChild(s);
+  }
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
